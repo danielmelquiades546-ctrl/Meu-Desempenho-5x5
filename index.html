@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Análise Futsociety 5x5 com IA</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600&display=swap');
+
+        :root {
+            --primary-color: #007bff;
+            --secondary-color: #f8f9fa;
+            --dark-color: #343a40;
+            --success-color: #28a745;
+            --warning-color: #ffc107;
+            --danger-color: #dc3545;
+            --bg-light: #f4f7fa;
+            --border-radius: 8px;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: var(--bg-light);
+            color: var(--dark-color);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 40px auto;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: var(--border-radius);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        header {
+            text-align: center;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--secondary-color);
+            margin-bottom: 20px;
+        }
+
+        header h1 {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+
+        .form-section {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 20px;
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: 600;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ced4da;
+            border-radius: var(--border-radius);
+            font-size: 16px;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        #addGameBtn {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            background-color: var(--primary-color);
+            color: #fff;
+            border: none;
+            border-radius: var(--border-radius);
+            font-size: 18px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.3s, transform 0.2s;
+        }
+
+        #addGameBtn:hover {
+            background-color: #0056b3;
+            transform: translateY(-2px);
+        }
+
+        .results-section, .chart-section, .history-section {
+            margin-top: 30px;
+            border-top: 2px solid var(--secondary-color);
+            padding-top: 20px;
+            display: none;
+        }
+
+        .results-section h2, .chart-section h2, .history-section h2 {
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .result-card {
+            background-color: var(--secondary-color);
+            padding: 20px;
+            border-radius: var(--border-radius);
+            margin-bottom: 15px;
+            border-left: 4px solid;
+        }
+
+        .result-card.positive { border-color: var(--success-color); }
+        .result-card.negative { border-color: var(--danger-color); }
+        .result-card.neutral { border-color: var(--warning-color); }
+        .result-card.generic { border-color: var(--primary-color); }
+
+        .history-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .history-item {
+            background-color: var(--secondary-color);
+            border: 1px solid #ced4da;
+            padding: 15px;
+            border-radius: var(--border-radius);
+            margin-bottom: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .history-item span {
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Análise de Desempenho Futsociety 5x5</h1>
+            <p>Adicione suas estatísticas do último jogo para receber uma análise e acompanhar seu progresso!</p>
+        </header>
+
+        <main>
+            <section class="form-section">
+                <div class="input-group">
+                    <label for="gameDate">Data do Jogo</label>
+                    <input type="date" id="gameDate" required>
+                </div>
+                <div class="input-group">
+                    <label for="goals">Gols Marcados</label>
+                    <input type="number" id="goals" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="assists">Assistências</label>
+                    <input type="number" id="assists" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="shots">Finalizações a Gol</label>
+                    <input type="number" id="shots" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="successfulPasses">Passes Certos</label>
+                    <input type="number" id="successfulPasses" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="failedPasses">Passes Errados</label>
+                    <input type="number" id="failedPasses" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="dribbles">Dribles Tentados</label>
+                    <input type="number" id="dribbles" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="tackles">Desarmes Feitos</label>
+                    <input type="number" id="tackles" value="0" min="0">
+                </div>
+                <div class="input-group">
+                    <label for="turnovers">Perdas de Posse</label>
+                    <input type="number" id="turnovers" value="0" min="0">
+                </div>
+                <button id="addGameBtn">Adicionar Jogo e Analisar</button>
+            </section>
+
+            <section id="results" class="results-section">
+                <h2>Relatório do Último Jogo</h2>
+                <div id="resultsContent"></div>
+            </section>
+
+            <section id="chartSection" class="chart-section">
+                <h2>Seu Progresso</h2>
+                <canvas id="myChart"></canvas>
+            </section>
+            
+            <section id="historySection" class="history-section">
+                <h2>Histórico de Jogos</h2>
+                <ul id="historyList" class="history-list"></ul>
+            </section>
+        </main>
+    </div>
+
+    <script>
+        document.getElementById('addGameBtn').addEventListener('click', addGameAndAnalyze);
+
+        let myChart;
+
+        function addGameAndAnalyze() {
+            const gameDate = document.getElementById('gameDate').value;
+            if (!gameDate) {
+                alert('Por favor, selecione a data do jogo.');
+                return;
+            }
+
+            const gameData = {
+                date: gameDate,
+                goals: parseInt(document.getElementById('goals').value),
+                assists: parseInt(document.getElementById('assists').value),
+                shots: parseInt(document.getElementById('shots').value),
+                successfulPasses: parseInt(document.getElementById('successfulPasses').value),
+                failedPasses: parseInt(document.getElementById('failedPasses').value),
+                dribbles: parseInt(document.getElementById('dribbles').value),
+                tackles: parseInt(document.getElementById('tackles').value),
+                turnovers: parseInt(document.getElementById('turnovers').value)
+            };
+
+            saveGameData(gameData);
+            analyzePerformance(gameData);
+            updateHistory();
+            updateChart();
+        }
+
+        function saveGameData(gameData) {
+            const games = JSON.parse(localStorage.getItem('games')) || [];
+            games.push(gameData);
+            localStorage.setItem('games', JSON.stringify(games));
+        }
+
+        function analyzePerformance(gameData) {
+            const { goals, assists, shots, successfulPasses, failedPasses, dribbles, tackles, turnovers } = gameData;
+            const resultsContainer = document.getElementById('resultsContent');
+            resultsContainer.innerHTML = '';
+            
+            document.getElementById('results').style.display = 'block';
+
+            const analysis = [];
+
+            if (goals > 0 && assists > 0) {
+                analysis.push({ type: 'positive', text: `Excelente! Você teve um desempenho decisivo com ${goals} gol(s) e ${assists} assistência(s).` });
+            } else if (goals > 0) {
+                analysis.push({ type: 'positive', text: `Parabéns pelos ${goals} gol(s)! Sua capacidade de finalização está em alta.` });
+            }
+
+            const shotEfficiency = (goals / shots) * 100;
+            if (shots > 0 && shotEfficiency < 20) {
+                analysis.push({ type: 'negative', text: `Sua taxa de conversão (${shotEfficiency.toFixed(0)}%) está baixa. Tente chutar com mais precisão.` });
+            } else if (shots === 0 && goals === 0) {
+                analysis.push({ type: 'neutral', text: `Você não finalizou nenhuma vez. Seja mais ousado e procure o chute a gol.` });
+            }
+
+            const passAccuracy = (successfulPasses / (successfulPasses + failedPasses)) * 100;
+            if (successfulPasses + failedPasses > 0 && passAccuracy < 60) {
+                analysis.push({ type: 'negative', text: `A sua precisão de passe (${passAccuracy.toFixed(0)}%) precisa melhorar. Treine passes curtos e objetivos.` });
+            } else if (successfulPasses + failedPasses > 0 && passAccuracy >= 80) {
+                analysis.push({ type: 'positive', text: `Ótima precisão de passe (${passAccuracy.toFixed(0)}%)! Isso demonstra um bom entendimento de jogo.` });
+            }
+
+            if (turnovers > (successfulPasses + failedPasses) * 0.5) {
+                analysis.push({ type: 'negative', text: `Você perdeu a bola com muita frequência. Tente passar a bola mais rápido.` });
+            }
+
+            if (tackles > 0 && turnovers < tackles) {
+                analysis.push({ type: 'positive', text: `Sua participação defensiva foi forte! Você contribuiu para a marcação do time.` });
+            } else if (tackles === 0) {
+                analysis.push({ type: 'neutral', text: `Você não fez nenhum desarme. Lembre-se de ajudar na marcação.` });
+            }
+
+            if (dribbles > 5 && goals === 0 && assists === 0) {
+                analysis.push({ type: 'warning', text: `Você driblou bastante, mas não gerou gols ou assistências. Aja com mais objetividade!` });
+            }
+
+            if (analysis.length === 0) {
+                analysis.push({ type: 'generic', text: 'Bom desempenho, mas a análise detalhada não encontrou pontos específicos. Continue praticando e anotando suas estatísticas!' });
+            }
+
+            analysis.forEach(item => {
+                const card = document.createElement('div');
+                card.className = `result-card ${item.type}`;
+                card.textContent = item.text;
+                resultsContainer.appendChild(card);
+            });
+        }
+
+        function updateHistory() {
+            const games = JSON.parse(localStorage.getItem('games')) || [];
+            const historyList = document.getElementById('historyList');
+            historyList.innerHTML = '';
+            document.getElementById('historySection').style.display = 'block';
+
+            if (games.length === 0) {
+                historyList.innerHTML = '<p style="text-align:center;">Nenhum jogo adicionado ainda.</p>';
+                return;
+            }
+
+            games.forEach(game => {
+                const listItem = document.createElement('li');
+                listItem.className = 'history-item';
+                const date = new Date(game.date).toLocaleDateString('pt-BR');
+                listItem.innerHTML = `
+                    <span>Data: ${date}</span>
+                    <span>Gols: ${game.goals}</span>
+                    <span>Assistências: ${game.assists}</span>
+                `;
+                historyList.appendChild(listItem);
+            });
+        }
+
+        function updateChart() {
+            const games = JSON.parse(localStorage.getItem('games')) || [];
+            if (games.length === 0) {
+                document.getElementById('chartSection').style.display = 'none';
+                return;
+            }
+
+            document.getElementById('chartSection').style.display = 'block';
+
+            const ctx = document.getElementById('myChart').getContext('2d');
+            
+            const labels = games.map(game => new Date(game.date).toLocaleDateString('pt-BR'));
+            const goalsData = games.map(game => game.goals);
+            const assistsData = games.map(game => game.assists);
+            const shotAccuracyData = games.map(game => game.shots > 0 ? (game.goals / game.shots) * 100 : 0);
+
+            const data = {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Gols',
+                        data: goalsData,
+                        borderColor: 'rgb(75, 192, 192)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Assistências',
+                        data: assistsData,
+                        borderColor: 'rgb(153, 102, 255)',
+                        tension: 0.1
+                    },
+                    {
+                        label: 'Precisão de Chute (%)',
+                        data: shotAccuracyData,
+                        borderColor: 'rgb(255, 159, 64)',
+                        tension: 0.1,
+                        hidden: true
+                    }
+                ]
+            };
+            
+            const config = {
+                type: 'line',
+                data: data,
+                options: {
+                    responsive: true,
+                    plugins: {
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false,
+                        },
+                        title: {
+                            display: true,
+                            text: 'Seu Desempenho ao Longo do Tempo'
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true
+                        }
+                    }
+                }
+            };
+
+            if (myChart) {
+                myChart.destroy();
+            }
+            myChart = new Chart(ctx, config);
+        }
+
+        window.onload = () => {
+            const games = JSON.parse(localStorage.getItem('games')) || [];
+            if (games.length > 0) {
+                updateHistory();
+                updateChart();
+            }
+        };
+    </script>
+</body>
+</html>
